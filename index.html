@@ -31,6 +31,15 @@
             box-sizing: border-box;
         }
 
+        /* Hide the scrollbar for a cleaner look on desktop */
+        body {
+            -ms-overflow-style: none; /* for Internet Explorer, Edge */
+            scrollbar-width: none; /* for Firefox */
+        }
+        body::-webkit-scrollbar {
+            display: none; /* for Chrome, Safari, and Opera */
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -63,10 +72,29 @@
             font-size: 1.5rem;
             font-weight: bold;
             padding: 0 1rem;
+            position: relative; /* For the pause button's position */
         }
 
         .score-display, .highscore-display {
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .pause-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: transform 0.1s ease;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .pause-button:hover {
+            transform: scale(1.1);
+        }
+        .pause-button:active {
+            transform: scale(0.9);
         }
 
         .game-container {
@@ -217,6 +245,19 @@
             cursor: pointer;
             transition: all 0.2s ease;
             white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.2;
+            width: 120px; /* Set a fixed width */
+            height: 55px; /* Set a fixed height */
+            justify-content: center; /* Center content vertically */
+        }
+
+        .speed-button .learn-more-text {
+            font-size: 0.7em; /* Smaller font for learn more */
+            opacity: 0.8;
+            margin-top: 0.2em;
         }
 
         .speed-button:hover {
@@ -231,6 +272,112 @@
             box-shadow: 0 4px 10px rgba(148, 253, 248, 0.3);
             transform: scale(1.05);
             font-weight: bold;
+        }
+
+        /* Progressive Learn More Popup */
+        .progressive-info-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background-color: var(--text-color);
+            color: var(--background-color);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            text-align: center;
+            max-width: 90%;
+            width: 350px;
+        }
+
+        .progressive-info-popup.visible {
+            opacity: 1;
+            visibility: visible;
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .progressive-info-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .progressive-info-popup-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .progressive-info-popup .close-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.8rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--background-color);
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .paused-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-bg);
+            display: none; /* Initially hidden */
+            justify-content: center;
+            align-items: center;
+            border-radius: 1rem;
+            z-index: 9;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            opacity: 0.9;
+            pointer-events: none; /* Allow clicks to pass through to the game */
+        }
+        .paused-overlay.visible {
+            display: flex;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            70% {
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px var(--text-color); }
+            50% { text-shadow: 0 0 15px var(--text-color), 0 0 25px var(--text-color); }
+            100% { text-shadow: 0 0 5px var(--text-color); }
+        }
+
+        .food-emoji {
+            animation: glow 2s infinite ease-in-out;
+            display: inline-block;
         }
         
         /* Responsive adjustments */
@@ -255,6 +402,18 @@
                 padding: 0.7rem 1.5rem;
                 font-size: 1rem;
             }
+            .speed-button {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.8rem;
+                width: 100px;
+                height: 50px;
+            }
+            .speed-button .learn-more-text {
+                font-size: 0.6em;
+            }
+            .progressive-info-popup {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
@@ -263,11 +422,14 @@
     <div class="main-wrapper">
         <div class="ui-header">
             <div class="score-display">Score: <span id="score">0</span></div>
+            <button id="pause-button" class="pause-button">Pause</button>
             <div class="highscore-display">High Score: <span id="high-score">0</span></div>
         </div>
         
         <div class="game-container">
             <canvas id="gameCanvas"></canvas>
+
+            <div id="paused-overlay" class="paused-overlay">Paused</div>
             
             <div id="start-modal" class="modal visible">
                 <h2>Snake</h2>
@@ -276,8 +438,9 @@
                 
                 <div class="speed-select-container">
                     <button class="speed-button" data-speed="slow">Slow</button>
-                    <button class="speed-button selected" data-speed="medium">Medium (Default)</button>
+                    <button class="speed-button" data-speed="medium">Medium</button>
                     <button class="speed-button" data-speed="fast">Fast</button>
+                    <button class="speed-button selected" data-speed="progressive">Progressive<span class="learn-more-text" id="progressive-learn-more">Learn more</span></button>
                 </div>
             </div>
             
@@ -288,8 +451,9 @@
 
                 <div class="speed-select-container">
                     <button class="speed-button" data-speed="slow">Slow</button>
-                    <button class="speed-button selected" data-speed="medium">Medium (Default)</button>
+                    <button class="speed-button" data-speed="medium">Medium</button>
                     <button class="speed-button" data-speed="fast">Fast</button>
+                    <button class="speed-button selected" data-speed="progressive">Progressive<span class="learn-more-text" id="progressive-learn-more-gameover">Learn more</span></button>
                 </div>
             </div>
         </div>
@@ -316,6 +480,13 @@
         </div>
     </div>
 
+    <div id="progressive-info-popup-overlay" class="progressive-info-popup-overlay"></div>
+    <div id="progressive-info-popup" class="progressive-info-popup">
+        <button id="popup-close-button" class="close-button">&times;</button>
+        <h3>Progressive Mode Explained</h3>
+        <p>Progressive mode increases the speed at which the snake moves by decreasing the game delay. The speed increases after every <strong>20 points</strong> you collect, making the game progressively more challenging! 🚀</p>
+    </div>
+
     <script>
     window.addEventListener('load', () => {
         // --- DOM Elements ---
@@ -328,7 +499,15 @@
         const finalScoreEl = document.getElementById('final-score');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
+        const pauseButton = document.getElementById('pause-button');
         const speedButtons = document.querySelectorAll('.speed-button');
+        const progressiveLearnMoreBtnStart = document.getElementById('progressive-learn-more');
+        const progressiveLearnMoreBtnGameOver = document.getElementById('progressive-learn-more-gameover');
+        const progressiveInfoPopup = document.getElementById('progressive-info-popup');
+        const progressiveInfoPopupOverlay = document.getElementById('progressive-info-popup-overlay');
+        const popupCloseButton = document.getElementById('popup-close-button');
+        const pausedOverlay = document.getElementById('paused-overlay');
+
 
         // --- Game Configuration ---
         const FOOD_EMOJIS = ['📸', '💡', '📱', '💻', '🎥', '📷'];
@@ -339,9 +518,13 @@
         const SPEEDS = {
             slow: 180,
             medium: 125,
-            fast: 80
+            fast: 80,
+            progressive: 150 // Initial speed for progressive mode
         };
-        let GAME_SPEED = SPEEDS.medium;
+        let GAME_SPEED = SPEEDS.progressive;
+        let selectedSpeedMode = 'progressive'; // Now progressive is the default
+        const PROGRESSIVE_SPEED_INCREASE_INTERVAL = 20; // Points to increase speed
+        const PROGRESSIVE_SPEED_DECREMENT = 10; // Milliseconds to decrease game speed by
 
         // --- Game State ---
         let gridSize;
@@ -354,9 +537,14 @@
         let gameStarted = false;
         let gameOver = false;
         let gameLoopTimeout;
+        let isPaused = false;
         let tongueOut = false;
         let tongueCounter = 0;
 
+        // --- Sound Effects ---
+        const chompSound = new Audio('https://raw.githubusercontent.com/adlaidyson-ffp/Snake-Game/refs/heads/main/sounds/chomp.mp3');
+        const gameOverSound = new Audio('https://raw.githubusercontent.com/adlaidyson-ffp/Snake-Game/refs/heads/main/sounds/gameover.mp3');
+        
         // --- Touch Controls State ---
         let touchStartX = 0;
         let touchStartY = 0;
@@ -365,10 +553,18 @@
         function init(startDirection = null) {
             gameOver = false;
             gameStarted = true;
+            isPaused = false;
             changingDirection = false;
             direction = startDirection || { x: 1, y: 0 };
             score = 0;
             
+            // Set initial game speed based on selected mode
+            if (selectedSpeedMode === 'progressive') {
+                GAME_SPEED = SPEEDS.progressive;
+            } else {
+                GAME_SPEED = SPEEDS[selectedSpeedMode];
+            }
+
             setupCanvas();
             updateGrid(INITIAL_GRID_COLS);
             
@@ -385,6 +581,8 @@
             
             startModal.classList.remove('visible');
             gameOverModal.classList.remove('visible');
+            pausedOverlay.classList.remove('visible');
+            pauseButton.style.display = 'block'; // Show pause button
 
             if (gameLoopTimeout) clearTimeout(gameLoopTimeout);
             main();
@@ -394,6 +592,9 @@
         function main() {
             if (gameOver) {
                 showGameOver();
+                return;
+            }
+            if (isPaused) {
                 return;
             }
             gameLoopTimeout = setTimeout(() => {
@@ -506,11 +707,21 @@
         }
 
         function drawFood() {
+            if (!food) return; // Fix to prevent error on initial load
             const { tileSize } = gridSize;
-            ctx.font = `${tileSize * 0.9}px sans-serif`; // Larger emoji
+            const x = food.x * tileSize + tileSize / 2;
+            const y = food.y * tileSize + tileSize / 2;
+            ctx.font = `${tileSize * 0.9}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(food.emoji, food.x * tileSize + tileSize / 2, food.y * tileSize + tileSize / 2);
+            
+            // To apply the glow effect, we'll draw the text and then use a shadow
+            ctx.save();
+            ctx.shadowColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+            ctx.shadowBlur = tileSize * 0.2; // A dynamic blur based on tile size
+            
+            ctx.fillText(food.emoji, x, y);
+            ctx.restore();
         }
 
         // --- Game Logic ---
@@ -523,9 +734,16 @@
             }
             const hasEatenFood = snake[0].x === food.x && snake[0].y === food.y;
             if (hasEatenFood) {
+                chompSound.currentTime = 0;
+                chompSound.play();
                 score += 10;
                 updateScoreDisplay();
                 checkAndResizeGrid();
+                if (selectedSpeedMode === 'progressive') {
+                    if (score > 0 && score % PROGRESSIVE_SPEED_INCREASE_INTERVAL === 0) {
+                        GAME_SPEED = Math.max(20, GAME_SPEED - PROGRESSIVE_SPEED_DECREMENT);
+                    }
+                }
                 generateFood();
             } else {
                 snake.pop();
@@ -571,14 +789,46 @@
         }
         
         function showGameOver() {
+            gameOverSound.currentTime = 0;
+            gameOverSound.play();
             finalScoreEl.textContent = score;
             gameOverModal.classList.add('visible');
+            pauseButton.style.display = 'none'; // Hide pause button on game over
+        }
+
+        // --- Pause Logic ---
+        function togglePause() {
+            if (!gameStarted || gameOver) return;
+
+            isPaused = !isPaused;
+            if (isPaused) {
+                clearTimeout(gameLoopTimeout);
+                pausedOverlay.classList.add('visible');
+                pauseButton.textContent = 'Play';
+            } else {
+                pausedOverlay.classList.remove('visible');
+                pauseButton.textContent = 'Pause';
+                main();
+            }
+        }
+
+        // --- Progressive Info Popup ---
+        function showProgressiveInfo() {
+            progressiveInfoPopupOverlay.classList.add('visible');
+            progressiveInfoPopup.classList.add('visible');
+        }
+
+        function hideProgressiveInfo() {
+            progressiveInfoPopup.classList.remove('visible');
+            setTimeout(() => {
+                progressiveInfoPopupOverlay.classList.remove('visible');
+            }, 300); 
         }
 
         // --- Input Handling ---
         function handleDirectionChange(newDirection) {
             if (gameStarted) {
-                if (changingDirection) return;
+                if (changingDirection || isPaused) return;
                 const goingUp = direction.y === -1, goingDown = direction.y === 1;
                 const goingRight = direction.x === 1, goingLeft = direction.x === -1;
                 let isValidMove = false;
@@ -599,10 +849,16 @@
 
         function handleKeyDown(event) {
             const key = event.key.toLowerCase();
+            // Prevent scrolling on desktop with arrow keys
+            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 's', 'a', 'd'].includes(key)) {
+                event.preventDefault();
+            }
+
             if (key === "arrowup" || key === "w") handleDirectionChange('UP');
             else if (key === "arrowdown" || key === "s") handleDirectionChange('DOWN');
             else if (key === "arrowleft" || key === "a") handleDirectionChange('LEFT');
             else if (key === "arrowright" || key === "d") handleDirectionChange('RIGHT');
+            else if (key === "p") togglePause();
         }
 
         function handleTouchStart(event) {
@@ -613,6 +869,7 @@
 
         function handleTouchEnd(event) {
             event.preventDefault(); // Prevents page scroll
+            if (isPaused) return;
             const touchEndX = event.changedTouches[0].screenX;
             const touchEndY = event.changedTouches[0].screenY;
             const dx = touchEndX - touchStartX;
@@ -630,25 +887,44 @@
         document.addEventListener("keydown", handleKeyDown);
         startButton.addEventListener('click', () => init());
         restartButton.addEventListener('click', () => init());
+        pauseButton.addEventListener('click', togglePause);
         canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
         
         speedButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Update the selected speed
-                const selectedSpeed = button.dataset.speed;
-                GAME_SPEED = SPEEDS[selectedSpeed];
-                
-                // Update the 'selected' class on all buttons in both modals
+            button.addEventListener('click', (event) => {
+                const speedMode = button.dataset.speed;
+                const isLearnMoreClick = event.target.classList.contains('learn-more-text');
+
+                if (isLearnMoreClick && speedMode === 'progressive') {
+                    showProgressiveInfo();
+                    return;
+                }
+
+                selectedSpeedMode = speedMode;
+
                 const allSpeedButtons = document.querySelectorAll('.speed-button');
                 allSpeedButtons.forEach(btn => {
                     btn.classList.remove('selected');
-                    if (btn.dataset.speed === selectedSpeed) {
+                    if (btn.dataset.speed === selectedSpeedMode) {
                         btn.classList.add('selected');
                     }
                 });
             });
         });
+
+        progressiveLearnMoreBtnStart.addEventListener('click', (event) => {
+            event.stopPropagation();
+            showProgressiveInfo();
+        });
+
+        progressiveLearnMoreBtnGameOver.addEventListener('click', (event) => {
+            event.stopPropagation();
+            showProgressiveInfo();
+        });
+
+        popupCloseButton.addEventListener('click', hideProgressiveInfo);
+        progressiveInfoPopupOverlay.addEventListener('click', hideProgressiveInfo);
         
         const resizeObserver = new ResizeObserver(() => {
             if (!gameStarted) {
@@ -661,6 +937,7 @@
         setupCanvas();
         highScore = localStorage.getItem('snakeHighScore') || 0;
         highScoreEl.textContent = highScore;
+        pauseButton.style.display = 'none'; // Hide the pause button initially
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
@@ -672,7 +949,7 @@
                 });
         }
     });
-</script>
+    </script>
 
 </body>
 </html>
