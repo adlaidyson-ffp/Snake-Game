@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Snake">
     <meta name="application-name" content="Snake">
-    <meta name="theme-color" content="#4CAF50">
+    <meta name="theme-color" content="#1e374d">
     <link rel="icon" href="https://raw.githubusercontent.com/adlaidyson-ffp/FFPMisc2/refs/heads/main/SnakeLogoFavicon.jpg" type="image/jpeg">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/adlaidyson-ffp/FFPMisc2/refs/heads/main/SnakeLogoFavicon.jpg">
     <style>
@@ -123,7 +123,7 @@
             margin: 0.5rem 0 1.5rem 0;
         }
 
-        .modal button {
+        .modal button.main-button {
             background-color: var(--text-color);
             color: var(--background-color);
             border: none;
@@ -134,9 +134,10 @@
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 4px 15px rgba(148, 253, 248, 0.2);
+            margin: 0.5rem;
         }
 
-        .modal button:hover {
+        .modal button.main-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(148, 253, 248, 0.3);
         }
@@ -194,6 +195,44 @@
             opacity: 1;
         }
 
+        /* Styles for the speed buttons container */
+        .speed-select-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        /* Styles for individual speed buttons */
+        .speed-button {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+            font-weight: normal;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .speed-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(148, 253, 248, 0.2);
+        }
+
+        .speed-button.selected {
+            background-color: var(--text-color);
+            color: var(--background-color);
+            border-color: var(--text-color);
+            box-shadow: 0 4px 10px rgba(148, 253, 248, 0.3);
+            transform: scale(1.05);
+            font-weight: bold;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 600px) {
             body {
@@ -212,7 +251,7 @@
             .modal p {
                 font-size: 1rem;
             }
-            .modal button {
+            .modal button.main-button {
                 padding: 0.7rem 1.5rem;
                 font-size: 1rem;
             }
@@ -229,15 +268,29 @@
         
         <div class="game-container">
             <canvas id="gameCanvas"></canvas>
+            
             <div id="start-modal" class="modal visible">
                 <h2>Snake</h2>
                 <p>Use Arrow Keys, WASD, or Swipe to play!</p>
-                <button id="start-button">Start Game</button>
+                <button id="start-button" class="main-button">Start Game</button>
+                
+                <div class="speed-select-container">
+                    <button class="speed-button" data-speed="slow">Slow</button>
+                    <button class="speed-button selected" data-speed="medium">Medium (Default)</button>
+                    <button class="speed-button" data-speed="fast">Fast</button>
+                </div>
             </div>
+            
             <div id="game-over-modal" class="modal">
                 <h2 id="game-over-title">Game Over</h2>
                 <p>Your score: <span id="final-score">0</span></p>
-                <button id="restart-button">Play Again</button>
+                <button id="restart-button" class="main-button">Play Again</button>
+
+                <div class="speed-select-container">
+                    <button class="speed-button" data-speed="slow">Slow</button>
+                    <button class="speed-button selected" data-speed="medium">Medium (Default)</button>
+                    <button class="speed-button" data-speed="fast">Fast</button>
+                </div>
             </div>
         </div>
         
@@ -254,7 +307,7 @@
                     View on GitHub
                 </a>
             </div>
-             <a href="https://adlaidyson.co.uk" target="_blank" rel="noopener noreferrer" class="logo-link">
+            <a href="https://adlaidyson.co.uk" target="_blank" rel="noopener noreferrer" class="logo-link">
                 <img src="https://raw.githubusercontent.com/adlaidyson-ffp/FFP-Online-Misc/refs/heads/New-Logos/FFP-NewLogo-Light-Banner-Transparent.png" alt="Your Logo">
             </a>
             <a href="https://adlaidyson.co.uk" target="_blank" rel="noopener noreferrer" class="credit-link">
@@ -275,12 +328,20 @@
         const finalScoreEl = document.getElementById('final-score');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
+        const speedButtons = document.querySelectorAll('.speed-button');
 
         // --- Game Configuration ---
         const FOOD_EMOJIS = ['📸', '💡', '📱', '💻', '🎥', '📷'];
         const INITIAL_SNAKE_LENGTH = 5;
         const INITIAL_GRID_COLS = 20;
-        const GAME_SPEED = 125; // Milliseconds per frame update
+        
+        // New speed configurations
+        const SPEEDS = {
+            slow: 180,
+            medium: 125,
+            fast: 80
+        };
+        let GAME_SPEED = SPEEDS.medium;
 
         // --- Game State ---
         let gridSize;
@@ -572,6 +633,23 @@
         canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
         
+        speedButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update the selected speed
+                const selectedSpeed = button.dataset.speed;
+                GAME_SPEED = SPEEDS[selectedSpeed];
+                
+                // Update the 'selected' class on all buttons in both modals
+                const allSpeedButtons = document.querySelectorAll('.speed-button');
+                allSpeedButtons.forEach(btn => {
+                    btn.classList.remove('selected');
+                    if (btn.dataset.speed === selectedSpeed) {
+                        btn.classList.add('selected');
+                    }
+                });
+            });
+        });
+        
         const resizeObserver = new ResizeObserver(() => {
             if (!gameStarted) {
                 setupCanvas();
@@ -580,8 +658,6 @@
         resizeObserver.observe(canvas.parentElement);
 
         // --- Initial Setup on Load and PWA Registration ---
-        // Note: The PWA registration code is placed here for best practice.
-        // It's inside the main event listener to ensure everything is loaded.
         setupCanvas();
         highScore = localStorage.getItem('snakeHighScore') || 0;
         highScoreEl.textContent = highScore;
