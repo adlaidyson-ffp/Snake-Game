@@ -72,6 +72,6 @@ Play Now!
 --------------------
 
 *   **Online Version**: [https://snake.adlaidyson.co.uk](https://snake.adlaidyson.co.uk)
-*   **PWA Version**: You can add this website as a web app to make it available offline, just select Add to Home Screen in your browser **Mobile Devices Only!**
+*   **PWA Version**: You can add this website as a web app to make it like its own app on your device, just select Add to Home Screen in your browser **Mobile Devices Only!**
 
 © Adlai Dyson | Fused Frame Photography. You may fork this project for your own use or use my instance!
