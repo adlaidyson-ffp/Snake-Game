@@ -66,3 +66,14 @@ A classic **snake game** with a modern twist, built with HTML, CSS, and vanill
 *   **Created by**: Adlai Dyson | Fused Frame Photography with help from Google Gemini
     
 *   **License**: This project is open source and available under the **MIT License**.
+
+
+Play Now!
+--------------------
+
+*   **Online Version**: [https://snake.adlaidyson.co.uk](https://snake.adlaidyson.co.uk)
+*   **Download for Windows**: Coming Soon!
+*   **Download for MacOS**: Coming Soon!
+*   **Download for Android**: Coming Soon!
+
+© Adlai Dyson | Fused Frame Photography. You may fork this project for your own use or use my instance!
