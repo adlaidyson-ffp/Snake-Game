@@ -1,7 +1,7 @@
 Snake
 -----
 
-A classic **snake game** with a modern twist, built with HTML, CSS, and vanilla JavaScript. This project features custom branding, responsive controls for desktop and mobile, and a dynamic game board.
+A classic **snake game** with a modern twist, built with HTML, CSS, and JavaScript. This project features custom branding, responsive controls for desktop and mobile, and a dynamic game board.
 
 🖼️ Screenshot
 --------------
