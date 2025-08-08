@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Snake</title>
+
+<style>
+  :root{
+    --bg: #1e374d;
+    --fg: #94fdf8;
+    --panel: rgba(255,255,255,0.03);
+    --accent: #7feee8;
+  }
+
+  @font-face{
+    font-family: 'Aptos';
+    src: local('Aptos'), local('AptosVariable');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face{
+    font-family: 'Aptos Bold';
+    src: local('Aptos Bold'), local('Aptos-Bold');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family: Aptos, "Aptos Bold", Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .container{
+    width: min(980px, 96vw);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.5);
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  .left {
+    flex: 1 1 420px;
+    min-width: 260px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+
+  .right {
+    width: 240px;
+    min-width: 200px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:stretch;
+  }
+
+  header{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  header h1{
+    font-size:18px;
+    margin:0;
+    letter-spacing:0.6px;
+    font-weight:700;
+  }
+
+  .board-wrap{
+    background: var(--panel);
+    border-radius:10px;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+  }
+
+  canvas{
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
+    border-radius:8px;
+    max-width:100%;
+    height:auto;
+    image-rendering: pixelated;
+    touch-action: none;
+  }
+
+  .stats{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    width:100%;
+  }
+  .stat{
+    background: rgba(255,255,255,0.02);
+    border-radius:8px;
+    padding:8px 10px;
+    font-weight:600;
+    font-size:14px;
+    color:var(--fg);
+    min-width:90px;
+    text-align:center;
+  }
+
+  .controls {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  button {
+    background: transparent;
+    border: 1px solid rgba(148,253,248,0.14);
+    color: var(--fg);
+    padding:8px 12px;
+    border-radius:8px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .small { padding:6px 8px; font-size:13px; }
+
+  .hint {
+    opacity:0.9;
+    font-size:13px;
+    text-align:center;
+    color: rgba(148,253,248,0.85);
+  }
+
+  .dpad {
+    display:grid;
+    grid-template-areas:
+      ". up ."
+      "left . right"
+      ". down .";
+    gap:6px;
+    justify-items:center;
+    align-items:center;
+  }
+  .dpad button{ width:52px; height:42px; }
+
+  footer{
+    margin-top:8px;
+    text-align:center;
+    color: rgba(148,253,248,0.8);
+    font-size:12px;
+  }
+
+  .overlay{
+    position: absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+  }
+  .game-over{
+    pointer-events:auto;
+    background:rgba(0,0,0,0.65);
+    color:var(--fg);
+    padding:16px;
+    border-radius:10px;
+    text-align:center;
+    min-width:260px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="left">
+    <header><h1>Snake</h1></header>
+    <div class="board-wrap" style="position:relative;">
+      <canvas id="gameCanvas" width="480" height="480"></canvas>
+      <div id="overlay" class="overlay" style="display:none">
+        <div class="game-over">
+          <h2 id="goTitle">Game Over</h2>
+          <p id="goText">Score: 0 — High Score: 0</p>
+          <button id="retryBtn">Play Again</button>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat">Score <div id="score">0</div></div>
+      <div class="stat">High <div id="high">0</div></div>
+    </div>
+    <div class="controls">
+      <button id="startBtn">Start</button>
+      <button id="pauseBtn">Pause</button>
+    </div>
+    <div class="hint">Arrow keys/WASD or use D-pad</div>
+  </div>
+  <div class="right">
+    <div class="dpad" id="dpad">
+      <button style="grid-area:up" data-dir="up">↑</button>
+      <button style="grid-area:left" data-dir="left">←</button>
+      <button style="grid-area:right" data-dir="right">→</button>
+      <button style="grid-area:down" data-dir="down">↓</button>
+    </div>
+    <footer>Snake made by Adlai Dyson | Fused Frame Photography</footer>
+  </div>
+</div>
+
+<script>
+function setCookie(n,v,d=365){document.cookie=`${n}=${v};max-age=${d*86400};path=/`; }
+function getCookie(n){return document.cookie.split('; ').find(r=>r.startsWith(n+'='))?.split('=')[1]||null;}
+let highScore = parseInt(getCookie('snake_high')||localStorage.getItem('snake_high')||0);
+
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+let grid=20, tile=canvas.width/grid;
+let snake=[],dir={x:1,y:0},nextDir=null,apple={},score=0,running=false,paused=false;
+const foodEmojis=["📷","📸","📱","💻"]; let foodIndex=0;
+
+function placeApple(){
+  do{apple.x=Math.floor(Math.random()*grid);apple.y=Math.floor(Math.random()*grid);}
+  while(snake.some(s=>s.x===apple.x && s.y===apple.y));
+}
+function init(){
+  snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+  dir={x:1,y:0};nextDir=null;score=0;
+  placeApple();running=true;paused=false;
+  document.getElementById('overlay').style.display='none';
+}
+function gameOver(){
+  running=false;
+  if(score>highScore){highScore=score;setCookie('snake_high',highScore);localStorage.setItem('snake_high',highScore);}
+  document.getElementById('goText').textContent=`Score: ${score} — High Score: ${highScore}`;
+  document.getElementById('high').textContent=highScore;
+  document.getElementById('overlay').style.display='flex';
+}
+function tick(){
+  if(!running||paused)return;
+  if(nextDir && !(nextDir.x===-dir.x && nextDir.y===-dir.y)) dir=nextDir;
+  const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(head.x<0||head.x>=grid||head.y<0||head.y>=grid||snake.some(s=>s.x===head.x&&s.y===head.y)){gameOver();return;}
+  snake.unshift(head);
+  if(head.x===apple.x && head.y===apple.y){
+    score+=10;
+    foodIndex=(foodIndex+1)%foodEmojis.length;
+    placeApple();
+  } else snake.pop();
+  document.getElementById('score').textContent=score;
+  draw();
+}
+function draw(){
+  ctx.fillStyle="#0f2a3a";ctx.fillRect(0,0,canvas.width,canvas.height);
+  // draw snake with rounded body & head
+  snake.forEach((s,i)=>{
+    const px=s.x*tile,py=s.y*tile;
+    ctx.beginPath();
+    ctx.fillStyle=i===0?"#bffef9":"#7feee8";
+    ctx.arc(px+tile/2,py+tile/2,tile/2.3,0,Math.PI*2);
+    ctx.fill();
+    if(i===0){ // eyes
+      ctx.fillStyle="#1e374d";
+      ctx.beginPath();
+      ctx.arc(px+tile*0.35,py+tile*0.35,tile/8,0,Math.PI*2);
+      ctx.arc(px+tile*0.65,py+tile*0.35,tile/8,0,Math.PI*2);
+      ctx.fill();
+    }
+  });
+  // draw food as emoji
+  ctx.font=`${tile*0.9}px sans-serif`;
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(foodEmojis[foodIndex],apple.x*tile+tile/2,apple.y*tile+tile/2);
+}
+let last=0,spd=150;
+function loop(ts){
+  if(ts-last>spd){tick();last=ts;}
+  requestAnimationFrame(loop);
+}
+loop();
+
+document.getElementById('startBtn').onclick=()=>{init();};
+document.getElementById('pauseBtn').onclick=()=>{paused=!paused;};
+document.getElementById('retryBtn').onclick=()=>{init();};
+
+window.onkeydown=e=>{
+  const k=e.key.toLowerCase();
+  if(k==="arrowup"||k==="w")nextDir={x:0,y:-1};
+  if(k==="arrowdown"||k==="s")nextDir={x:0,y:1};
+  if(k==="arrowleft"||k==="a")nextDir={x:-1,y:0};
+  if(k==="arrowright"||k==="d")nextDir={x:1,y:0};
+};
+
+document.getElementById('dpad').onclick=e=>{
+  if(e.target.dataset.dir==="up")nextDir={x:0,y:-1};
+  if(e.target.dataset.dir==="down")nextDir={x:0,y:1};
+  if(e.target.dataset.dir==="left")nextDir={x:-1,y:0};
+  if(e.target.dataset.dir==="right")nextDir={x:1,y:0};
+};
+
+document.getElementById('high').textContent=highScore;
+</script>
+</body>
+</html>
