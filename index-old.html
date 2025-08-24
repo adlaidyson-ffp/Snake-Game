@@ -536,11 +536,32 @@
         let tongueOut = false;
         let tongueCounter = 0;
 
-        // --- Sound Effects ---
-        const chompSound = new Audio('./sounds/chomp.mp3');
-        chompSound.volume = 0.5; // Adjust volume for chomp sound
-        const gameOverSound = new Audio('./sounds/gameover.mp3');
-        gameOverSound.volume = 0.2; // Adjust volume for game over sound
+        // --- Sound Effects (Web Audio API Version) ---
+		const audioContext = new AudioContext();
+		let chompBuffer, gameOverBuffer;
+
+		// Function to load a sound file
+		async function loadSound(url) {
+			const response = await fetch(url);
+			const arrayBuffer = await response.arrayBuffer();
+			return await audioContext.decodeAudioData(arrayBuffer);
+		}
+
+		// Function to play a sound from a buffer
+		function playSound(buffer, volume = 1.0) {
+			const source = audioContext.createBufferSource();
+			source.buffer = buffer;
+
+			const gainNode = audioContext.createGain();
+			gainNode.gain.value = volume;
+			source.connect(gainNode).connect(audioContext.destination);
+
+			source.start(0);
+		}
+
+		// Load the sound files when the script starts
+		loadSound('./sounds/chomp.mp3').then(buffer => chompBuffer = buffer);
+		loadSound('./sounds/gameover.mp3').then(buffer => gameOverBuffer = buffer);
         
         // --- Touch Controls State ---
         let touchStartX = 0;
@@ -744,31 +765,41 @@
             foodDiv.style.textAlign = 'center';
         }
 
-        // --- Game Logic ---
-        function moveSnake() {
-            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-            snake.unshift(head);
-            if (hasGameEnded()) {
-                gameOver = true;
-                return;
-            }
-            const hasEatenFood = snake[0].x === food.x && snake[0].y === food.y;
-            if (hasEatenFood) {
-                chompSound.currentTime = 0;
-                chompSound.play();
-                score += 10;
-                updateScoreDisplay();
-                checkAndResizeGrid();
-                if (selectedSpeedMode === 'progressive') {
-                    if (score > 0 && score % PROGRESSIVE_SPEED_INCREASE_INTERVAL === 0) {
-                        GAME_SPEED = Math.max(20, GAME_SPEED - PROGRESSIVE_SPEED_DECREMENT);
-                    }
-                }
-                generateFood();
-            } else {
-                snake.pop();
-            }
-        }
+        // --- Game Logic (Web Audio API Version) ---
+		function moveSnake() {
+			const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+			snake.unshift(head);
+
+			if (hasGameEnded()) {
+				gameOver = true;
+				// Example of playing the game over sound
+				if (gameOverBuffer) {
+					playSound(gameOverBuffer, 0.2);
+				}
+				return;
+			}
+
+			const hasEatenFood = snake[0].x === food.x && snake[0].y === food.y;
+			if (hasEatenFood) {
+				// Play the chomp sound using the new function
+				if (chompBuffer) {
+					playSound(chompBuffer, 0.5);
+				}
+
+				score += 10;
+				updateScoreDisplay();
+				checkAndResizeGrid();
+
+				if (selectedSpeedMode === 'progressive') {
+					if (score > 0 && score % PROGRESSIVE_SPEED_INCREASE_INTERVAL === 0) {
+						GAME_SPEED = Math.max(20, GAME_SPEED - PROGRESSIVE_SPEED_DECREMENT);
+					}
+				}
+				generateFood();
+			} else {
+				snake.pop();
+			}
+		}
         
         function checkAndResizeGrid() {
             const len = snake.length;
@@ -812,13 +843,17 @@
         }
         
         function showGameOver() {
-            gameOverSound.currentTime = 0;
-            gameOverSound.play();
-            finalScoreEl.textContent = score;
-            gameOverModal.classList.add('visible');
-            pauseButton.style.display = 'none'; // Hide pause button on game over
-            if (foodDiv) foodDiv.style.display = 'none';
-        }
+			// Correctly use the Web Audio API to play the game over sound
+			if (gameOverBuffer) {
+				playSound(gameOverBuffer, 0.2); // You can adjust the volume here
+			}
+    
+			// Continue with the original game over logic
+			finalScoreEl.textContent = score;
+			gameOverModal.classList.add('visible');
+			pauseButton.style.display = 'none'; // Hide pause button on game over
+			if (foodDiv) foodDiv.style.display = 'none';
+		}
 
         // --- Pause Logic ---
         function togglePause() {

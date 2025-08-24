@@ -725,46 +725,16 @@
         }
 
         function drawFood() {
-            if (!food) return;
-            const { tileSize } = gridSize;
-            const x = food.x * tileSize + tileSize / 2;
-            const y = food.y * tileSize + tileSize / 2;
-            ctx.font = `${tileSize * 0.9}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            ctx.save();
-            ctx.shadowColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-            ctx.shadowBlur = tileSize * 0.2;
-            
-            // To animate the glow, we use a CSS animation on a text element.
-            // We'll draw the emoji on the canvas without the animation, and the CSS
-            // will handle the glowing text.
+    	    ctx.font = `${gridSize.tileSize * 0.8}px serif`; // scale emoji to tile
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const x = food.x * gridSize.tileSize + gridSize.tileSize / 2;
+            const y = food.y * gridSize.tileSize + gridSize.tileSize / 2;
+
             ctx.fillText(food.emoji, x, y);
-            ctx.restore();
         }
         
-        // This function draws the glowing food emoji using a div on top of the canvas
-        // This is a more performant way to animate the glow without redrawing the entire canvas
-        let foodDiv = null;
-        function createFoodDiv(foodPos) {
-            if (!foodDiv) {
-                foodDiv = document.createElement('div');
-                foodDiv.classList.add('food-emoji');
-                document.getElementById('game-container').appendChild(foodDiv);
-            }
-            foodDiv.textContent = foodPos.emoji;
-            const { tileSize } = gridSize;
-            foodDiv.style.position = 'absolute';
-            foodDiv.style.left = `${foodPos.x * tileSize}px`;
-            foodDiv.style.top = `${foodPos.y * tileSize}px`;
-            foodDiv.style.width = `${tileSize}px`;
-            foodDiv.style.height = `${tileSize}px`;
-            foodDiv.style.lineHeight = `${tileSize}px`;
-            foodDiv.style.fontSize = `${tileSize * 0.9}px`;
-            foodDiv.style.textAlign = 'center';
-        }
-
         // --- Game Logic (Web Audio API Version) ---
 		function moveSnake() {
 			const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
@@ -828,9 +798,6 @@
                     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)]
                 };
             } while (snake.some(s => s.x === food.x && s.y === food.y));
-            
-            // Call the function to create/update the food div
-            createFoodDiv(food);
         }
 
         function updateScoreDisplay() {
@@ -852,7 +819,6 @@
 			finalScoreEl.textContent = score;
 			gameOverModal.classList.add('visible');
 			pauseButton.style.display = 'none'; // Hide pause button on game over
-			if (foodDiv) foodDiv.style.display = 'none';
 		}
 
         // --- Pause Logic ---
@@ -864,11 +830,9 @@
                 clearTimeout(gameLoopTimeout);
                 pausedOverlay.classList.add('visible');
                 pauseButton.textContent = 'Play';
-                if (foodDiv) foodDiv.style.animationPlayState = 'paused';
             } else {
                 pausedOverlay.classList.remove('visible');
                 pauseButton.textContent = 'Pause';
-                if (foodDiv) foodDiv.style.animationPlayState = 'running';
                 main();
             }
         }
