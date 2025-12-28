@@ -71,7 +71,7 @@ A classic **snake game** with a modern twist, built with HTML, CSS, and JavaSc
 Play Now!
 --------------------
 
-*   **Online Version**: [https://snake.adlaidyson.co.uk](https://snake.adlaidyson.co.uk)
+*   **Online Version**: [https://snake.adlaidyson.co.uk](https://snake.adlaidyson.co.uk) - hosted via Cloudflare Pages
 *   **PWA Version**: You can add this website as a web app to make it like its own app on your device, just select Add to Home Screen in your browser **Mobile Devices Only!**
 
 © Adlai Dyson | Fused Frame Photography. You may fork this project for your own use or use my instance!
