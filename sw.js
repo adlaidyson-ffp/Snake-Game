@@ -1,8 +1,7 @@
-const CACHE_NAME = 'snake-game-cache-v1';
+const CACHE_NAME = 'snake-game-cache-v1.4';
 const urlsToCache = [
   '/',
-  'index.html',
-  'https://raw.githubusercontent.com/adlaidyson-ffp/FFPMisc2/refs/heads/main/SnakeLogoFavicon.jpg' // Your favicon
+  'index.html'
 ];
 
 self.addEventListener('install', event => {
